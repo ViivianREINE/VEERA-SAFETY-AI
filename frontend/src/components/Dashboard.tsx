@@ -51,7 +51,7 @@ export default function Dashboard({ activeTab }: DashboardProps) {
           const score = Math.round(data.score * 100);
           setPanicScore(data.score);
           setDetections(data.detections);
-          setAlert(data.alert);
+          setwindow.alert(data.alert);
 
           // Update chart history
           setHistory(prev => {
@@ -88,7 +88,7 @@ export default function Dashboard({ activeTab }: DashboardProps) {
       }
     } catch (err) {
       console.error("Hardware Access Error:", err);
-    window.alert("Microphone or Camera access denied.");
+    window.window.alert("Microphone or Camera access denied.");
     }
   };
 
@@ -157,12 +157,12 @@ export default function Dashboard({ activeTab }: DashboardProps) {
       setUploadProgress(100);
       setUploadResults(data.results);
       setPanicScore(data.results.panic_score);
-      setAlert(data.results.alert);
+      setwindow.alert(data.results.alert);
       setDetections(data.results.detections || []);
     } catch (err) {
       console.error(err);
       setUploadProgress(0);
-      alert("Deep Analysis Failed. Backend Check Required.");
+      window.alert("Deep Analysis Failed. Backend Check Required.");
     }
   };
 
