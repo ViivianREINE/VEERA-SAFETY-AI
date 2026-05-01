@@ -146,8 +146,15 @@ export default function Dashboard({ activeTab }: DashboardProps) {
     formData.append("file", selectedFile);
     formData.append("upload_type", uploadType);
 
+    let progressVal = 20;
+    const progressInterval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (prev < 95) return prev + 1;
+        return prev;
+      });
+    }, 500);
+
     try {
-      setUploadProgress(50);
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "localhost:8000";
       const protocol = backendUrl.includes("localhost") ? "http" : "https";
       const apiBase = backendUrl.startsWith("http") ? backendUrl : `${protocol}://${backendUrl}`;
@@ -159,6 +166,8 @@ export default function Dashboard({ activeTab }: DashboardProps) {
 
       const data = await res.json();
       
+      clearInterval(progressInterval);
+      
       if (!res.ok) {
         throw new Error(data.detail || data.error || "Analysis failed on backend");
       }
@@ -169,6 +178,7 @@ export default function Dashboard({ activeTab }: DashboardProps) {
       setAlert(data.results?.alert || false);
       setDetections(data.results?.detections || []);
     } catch (err: any) {
+      clearInterval(progressInterval);
       console.error("Upload Error:", err);
       setUploadProgress(0);
       window.alert(`Deep Analysis Failed: ${err.message || "Connection Error"}`);

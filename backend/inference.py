@@ -35,8 +35,8 @@ class InferenceEngine:
         Returns a panic score > 90% if crowd + erratic movement is detected.
         """
         # 1. Object Detection (YOLOv8)
-        # We only care about class 0 (person)
-        results = yolo_model(frame, classes=[0], verbose=False)
+        # Optimized for speed with smaller imgsz and classes filter
+        results = yolo_model(frame, classes=[0], imgsz=320, verbose=False)
         
         detections = []
         num_people = 0
@@ -133,7 +133,11 @@ def analyze_video_offline(video_path):
     max_score = 0
     detections_snapshot = []
     
+    frame_jump = 15 # Process 1 frame every 0.5s (assuming 30fps)
+    max_total_frames = 20 # Max frames to analyze to keep it fast
     frames_processed = 0
+    current_frame_idx = 0
+    
     if not cap.isOpened():
         logger.error(f"Could not open video file: {video_path}")
         return {
@@ -143,20 +147,22 @@ def analyze_video_offline(video_path):
             "status": "Error: Could not open video"
         }
 
-    while cap.isOpened() and frames_processed < 60: # Limit to first 60 frames for quick demo
+    while cap.isOpened() and frames_processed < max_total_frames:
         ret, frame = cap.read()
         if not ret:
             break
             
-        try:
-            result = engine_offline.analyze_frame(frame)
-            if result["panic_score"] > max_score:
-                max_score = result["panic_score"]
-                detections_snapshot = result["detections"]
-        except Exception as frame_err:
-            logger.warning(f"Error processing frame {frames_processed}: {frame_err}")
+        if current_frame_idx % frame_jump == 0:
+            try:
+                result = engine_offline.analyze_frame(frame)
+                if result["panic_score"] > max_score:
+                    max_score = result["panic_score"]
+                    detections_snapshot = result["detections"]
+                frames_processed += 1
+            except Exception as frame_err:
+                logger.warning(f"Error processing frame at index {current_frame_idx}: {frame_err}")
             
-        frames_processed += 1
+        current_frame_idx += 1
         
     cap.release()
     
