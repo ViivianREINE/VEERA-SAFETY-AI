@@ -1,3 +1,7 @@
+import os
+# Set YOLO config directory to a writable location to avoid warnings on Render
+os.environ['YOLO_CONFIG_DIR'] = '/tmp/ultralytics_config'
+
 import cv2
 import numpy as np
 from ultralytics import YOLO
