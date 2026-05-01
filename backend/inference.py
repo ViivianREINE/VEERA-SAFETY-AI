@@ -137,8 +137,8 @@ def analyze_video_offline(video_path):
     max_score = 0
     detections_snapshot = []
     
-    frame_jump = 15 # Process 1 frame every 0.5s (assuming 30fps)
-    max_total_frames = 20 # Max frames to analyze to keep it fast
+    frame_jump = 30 # Process 1 frame every 1s (assuming 30fps)
+    max_total_frames = 10 # Max frames to analyze for instant results
     frames_processed = 0
     current_frame_idx = 0
     
