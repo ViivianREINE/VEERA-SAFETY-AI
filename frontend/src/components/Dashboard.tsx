@@ -51,7 +51,7 @@ export default function Dashboard({ activeTab }: DashboardProps) {
           const score = Math.round(data.score * 100);
           setPanicScore(data.score);
           setDetections(data.detections);
-          setwindow.alert(data.alert);
+          setAlert(data.alert);
 
           // Update chart history
           setHistory(prev => {
@@ -157,7 +157,7 @@ export default function Dashboard({ activeTab }: DashboardProps) {
       setUploadProgress(100);
       setUploadResults(data.results);
       setPanicScore(data.results.panic_score);
-      setwindow.alert(data.results.alert);
+      setAlert(data.results.alert);
       setDetections(data.results.detections || []);
     } catch (err) {
       console.error(err);
