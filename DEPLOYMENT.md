@@ -1,50 +1,22 @@
-# Deployment Guide
+# VEERA-SAFETY-AI Deployment Guide
 
-This project is separated into a FastAPI Backend and a Next.js Frontend.
+## 1. Backend Deployment (Render)
+- **Root Directory**: `backend`
+- **Build Command**: `pip install -r requirements.txt`
+- **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+- **Environment Variables**:
+  - `PORT`: (Automatically set by Render)
+  - `ALLOWED_ORIGINS`: `https://your-frontend.vercel.app`
 
-## Backend Deployment (Render)
+## 2. Frontend Deployment (Vercel)
+- **Root Directory**: `frontend`
+- **Build Command**: `npm run build`
+- **Output Directory**: `.next`
+- **Environment Variables**:
+  - `NEXT_PUBLIC_BACKEND_URL`: `your-backend-service.onrender.com`
+  - `NEXT_PUBLIC_WS_URL`: `wss://your-backend-service.onrender.com/stream`
 
-Render is perfect for deploying Python FastAPI applications.
-
-1. Create a new **Web Service** on [Render](https://render.com/).
-2. Connect your GitHub repository containing this codebase.
-3. Set the Root Directory to `backend`.
-4. Environment Setup:
-   - **Environment**: Python
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port 10000`
-5. Render will automatically expose your API (e.g., `https://your-api.onrender.com`).
-6. Update the Frontend WebSocket URL in `frontend/src/components/Dashboard.tsx` to point to `wss://your-api.onrender.com/stream`.
-
-## Frontend Deployment (Vercel)
-
-Vercel is the optimal platform for Next.js applications.
-
-1. Log in to [Vercel](https://vercel.com/) and click "Add New Project".
-2. Import your GitHub repository.
-3. Configure the Project:
-   - **Framework Preset**: Next.js
-   - **Root Directory**: `frontend`
-4. Click **Deploy**. Vercel will automatically build and host your Next.js application.
-
-## Local Execution
-
-To run locally, you need two terminal windows.
-
-**Terminal 1 (Backend)**:
-```bash
-cd backend
-python -m venv venv
-source venv/Scripts/activate # Windows
-pip install -r requirements.txt
-uvicorn main:app --reload
-```
-
-**Terminal 2 (Frontend)**:
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Open `http://localhost:3000` in your browser.
+## 3. Local Development
+- Copy `frontend/.env.local` and ensure it points to `localhost:8000`.
+- Run `npm run dev` in `frontend`.
+- Run `uvicorn main:app` in `backend`.
