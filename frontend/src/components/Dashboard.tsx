@@ -89,7 +89,7 @@ export default function Dashboard({ activeTab }: DashboardProps) {
       }
     } catch (err) {
       console.error("Hardware Access Error:", err);
-    window.window.alert("Microphone or Camera access denied.");
+      window.alert("Microphone or Camera access denied.");
     }
   };
 
@@ -151,20 +151,27 @@ export default function Dashboard({ activeTab }: DashboardProps) {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "localhost:8000";
       const protocol = backendUrl.includes("localhost") ? "http" : "https";
       const apiBase = backendUrl.startsWith("http") ? backendUrl : `${protocol}://${backendUrl}`;
+      
       const res = await fetch(`${apiBase}/upload`, {
         method: "POST",
         body: formData,
       });
+
       const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.detail || data.error || "Analysis failed on backend");
+      }
+
       setUploadProgress(100);
       setUploadResults(data.results);
-      setPanicScore(data.results.panic_score);
-      setAlert(data.results.alert);
-      setDetections(data.results.detections || []);
-    } catch (err) {
-      console.error(err);
+      setPanicScore(data.results?.panic_score || 0);
+      setAlert(data.results?.alert || false);
+      setDetections(data.results?.detections || []);
+    } catch (err: any) {
+      console.error("Upload Error:", err);
       setUploadProgress(0);
-      window.alert("Deep Analysis Failed. Backend Check Required.");
+      window.alert(`Deep Analysis Failed: ${err.message || "Connection Error"}`);
     }
   };
 

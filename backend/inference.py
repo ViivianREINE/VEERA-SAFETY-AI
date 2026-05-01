@@ -2,9 +2,27 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 
+import os
+import logging
+
+logger = logging.getLogger(__name__)
+
 # Load YOLOv8 Nano model for fast CPU/GPU inference
 # It will download yolov8n.pt automatically on first run
-yolo_model = YOLO("yolov8n.pt")
+MODEL_PATH = "yolov8n.pt"
+if not os.path.exists(MODEL_PATH):
+    # Try checking the parent directory as well
+    PARENT_MODEL_PATH = os.path.join("..", MODEL_PATH)
+    if os.path.exists(PARENT_MODEL_PATH):
+        MODEL_PATH = PARENT_MODEL_PATH
+        
+logger.info(f"Initializing YOLOv8 with weights from: {os.path.abspath(MODEL_PATH)}")
+try:
+    yolo_model = YOLO(MODEL_PATH)
+except Exception as e:
+    logger.error(f"Failed to load YOLO model: {e}")
+    # Fallback or placeholder might be needed, but for now we let it raise
+    raise
 
 class InferenceEngine:
     def __init__(self):
@@ -95,10 +113,10 @@ class InferenceEngine:
         alert = bool(final_score > 0.75)
 
         return {
-            "panic_score": round(final_score, 3),
+            "panic_score": float(round(final_score, 3)),
             "detections": detections,
             "alert": alert,
-            "motion": round(motion_magnitude, 2)
+            "motion": float(round(motion_magnitude, 2))
         }
 
 # Global instance for the websocket
@@ -116,22 +134,34 @@ def analyze_video_offline(video_path):
     detections_snapshot = []
     
     frames_processed = 0
+    if not cap.isOpened():
+        logger.error(f"Could not open video file: {video_path}")
+        return {
+            "panic_score": 0.0,
+            "detections": [],
+            "alert": False,
+            "status": "Error: Could not open video"
+        }
+
     while cap.isOpened() and frames_processed < 60: # Limit to first 60 frames for quick demo
         ret, frame = cap.read()
         if not ret:
             break
             
-        result = engine_offline.analyze_frame(frame)
-        if result["panic_score"] > max_score:
-            max_score = result["panic_score"]
-            detections_snapshot = result["detections"]
+        try:
+            result = engine_offline.analyze_frame(frame)
+            if result["panic_score"] > max_score:
+                max_score = result["panic_score"]
+                detections_snapshot = result["detections"]
+        except Exception as frame_err:
+            logger.warning(f"Error processing frame {frames_processed}: {frame_err}")
             
         frames_processed += 1
         
     cap.release()
     
     return {
-        "panic_score": round(max_score, 3),
+        "panic_score": float(round(max_score, 3)),
         "detections": detections_snapshot,
         "alert": bool(max_score > 0.75),
         "status": "Analysis Complete"

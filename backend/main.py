@@ -55,6 +55,7 @@ async def upload_file(
         shutil.copyfileobj(file.file, buffer)
 
     try:
+        logger.info(f"Starting analysis for {file.filename} (type: {upload_type})")
         if upload_type == "audio":
             result = inference_engine.analyze_audio(str(target_path))
         elif upload_type == "video":
@@ -70,11 +71,19 @@ async def upload_file(
             alert=result.get("alert", False),
             detections_count=len(result.get("detections", []))
         )
-
+        
+        logger.info(f"Analysis successful for {file.filename}")
         return {"filename": file.filename, "type": upload_type, "results": result}
     except Exception as exc:
-        logger.error("Upload analyze failure", exc_info=exc)
-        return JSONResponse({"error": "Analysis failed", "detail": str(exc)}, status_code=500)
+        logger.error(f"Analysis failure for {file.filename}: {exc}", exc_info=True)
+        return JSONResponse(
+            {"error": "Analysis failed", "detail": str(exc)}, 
+            status_code=500
+        )
+    finally:
+        # Optional: cleanup temp file if needed
+        # if target_path.exists(): target_path.unlink()
+        pass
 
 @app.post("/analyze")
 async def analyze_file(
@@ -130,4 +139,17 @@ async def get_analysis_logs():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)
+    import os
+    import sys
+    
+    # Determine the correct module name based on current directory
+    # If run from root as 'python backend/main.py', it should be 'backend.main:app'
+    # If run from backend as 'python main.py', it should be 'main:app'
+    cwd = os.getcwd()
+    if os.path.basename(cwd) == "backend":
+        module = "main:app"
+    else:
+        module = "backend.main:app"
+        
+    print(f"Starting VEERA_SAFETY_AI Backend via {module}...")
+    uvicorn.run(module, host="0.0.0.0", port=8000, reload=True)
