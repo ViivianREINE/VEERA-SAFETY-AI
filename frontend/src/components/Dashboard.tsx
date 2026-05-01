@@ -42,7 +42,8 @@ export default function Dashboard({ activeTab }: DashboardProps) {
   useEffect(() => {
     if (activeTab === "live" && isAnalyzing) {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "localhost:8000";
-      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || `ws://${backendUrl}/stream`;
+      const wsProtocol = backendUrl.includes("localhost") ? "ws" : "wss";
+      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || `${wsProtocol}://${backendUrl}/stream`;
       ws.current = new WebSocket(wsUrl);
       ws.current.onopen = () => console.log("Elite Backend Link Established");
       ws.current.onmessage = (event) => {
@@ -148,7 +149,8 @@ export default function Dashboard({ activeTab }: DashboardProps) {
     try {
       setUploadProgress(50);
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "localhost:8000";
-      const apiBase = backendUrl.startsWith("http") ? backendUrl : `http://${backendUrl}`;
+      const protocol = backendUrl.includes("localhost") ? "http" : "https";
+      const apiBase = backendUrl.startsWith("http") ? backendUrl : `${protocol}://${backendUrl}`;
       const res = await fetch(`${apiBase}/upload`, {
         method: "POST",
         body: formData,
