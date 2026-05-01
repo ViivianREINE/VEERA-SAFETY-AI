@@ -11,22 +11,26 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Load YOLOv8 Nano model for fast CPU/GPU inference
-# It will download yolov8n.pt automatically on first run
 MODEL_PATH = "yolov8n.pt"
-if not os.path.exists(MODEL_PATH):
-    # Try checking the parent directory as well
-    PARENT_MODEL_PATH = os.path.join("..", MODEL_PATH)
-    if os.path.exists(PARENT_MODEL_PATH):
-        MODEL_PATH = PARENT_MODEL_PATH
-        
-logger.info(f"Initializing YOLOv8 with weights from: {os.path.abspath(MODEL_PATH)}")
-try:
-    yolo_model = YOLO(MODEL_PATH)
-except Exception as e:
-    logger.error(f"Failed to load YOLO model: {e}")
-    # Fallback or placeholder might be needed, but for now we let it raise
-    raise
+yolo_model = None
+
+def get_yolo_model():
+    """Lazy loader for the YOLO model to prevent health check timeouts."""
+    global yolo_model
+    if yolo_model is None:
+        # Check path
+        path = MODEL_PATH
+        if not os.path.exists(path):
+            parent_path = os.path.join("..", path)
+            if os.path.exists(parent_path): path = parent_path
+            
+        logger.info(f"Lazy loading YOLOv8 from: {os.path.abspath(path)}")
+        try:
+            yolo_model = YOLO(path)
+        except Exception as e:
+            logger.error(f"Failed to load YOLO model: {e}")
+            raise
+    return yolo_model
 
 class InferenceEngine:
     def __init__(self):
@@ -40,7 +44,8 @@ class InferenceEngine:
         """
         # 1. Object Detection (YOLOv8)
         # Optimized for speed with smaller imgsz and classes filter
-        results = yolo_model(frame, classes=[0], imgsz=320, verbose=False)
+        model = get_yolo_model()
+        results = model(frame, classes=[0], imgsz=320, verbose=False)
         
         detections = []
         num_people = 0
