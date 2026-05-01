@@ -172,10 +172,13 @@ if __name__ == "__main__":
     # If run from root as 'python backend/main.py', it should be 'backend.main:app'
     # If run from backend as 'python main.py', it should be 'main:app'
     cwd = os.getcwd()
-    if os.path.basename(cwd) == "backend":
-        module = "main:app"
-    else:
-        module = "backend.main:app"
-        
-    print(f"Starting VEERA_SAFETY_AI Backend via {module}...")
-    uvicorn.run(module, host="0.0.0.0", port=8000, reload=True)
+    module = "main:app" if os.path.basename(cwd) == "backend" else "backend.main:app"
+    
+    # Render provides the port via environment variable
+    port = int(os.environ.get("PORT", 8000))
+    
+    # Disable reload in production to avoid port issues
+    is_dev = os.environ.get("RENDER") is None
+    
+    print(f"Starting VEERA_SAFETY_AI Backend on port {port} (reload={is_dev})...")
+    uvicorn.run(module, host="0.0.0.0", port=port, reload=is_dev)
