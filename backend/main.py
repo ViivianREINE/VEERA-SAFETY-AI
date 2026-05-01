@@ -40,6 +40,15 @@ async def startup_event():
     except Exception as e:
         logger.warning(f"Warm-up failed (non-critical): {e}")
 
+@app.get("/")
+async def root():
+    return {
+        "status": "online",
+        "system": "VEERA_SAFETY_AI Neural Core",
+        "version": "v2.4.1",
+        "endpoints": ["/health", "/upload", "/logs", "/stream"]
+    }
+
 @app.get("/health")
 def health_check():
     return {"status": "ok", "message": "VEERA_SAFETY_AI backend is alive."}
