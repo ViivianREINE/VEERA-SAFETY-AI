@@ -88,7 +88,7 @@ export default function Dashboard({ activeTab }: DashboardProps) {
       }
     } catch (err) {
       console.error("Hardware Access Error:", err);
-      alert("Microphone or Camera access denied.");
+    window.alert("Microphone or Camera access denied.");
     }
   };
 
