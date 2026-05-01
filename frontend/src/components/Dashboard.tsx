@@ -155,15 +155,27 @@ export default function Dashboard({ activeTab }: DashboardProps) {
     }, 500);
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "localhost:8000";
-      const protocol = backendUrl.includes("localhost") ? "http" : "https";
-      const apiBase = backendUrl.startsWith("http") ? backendUrl : `${protocol}://${backendUrl}`;
+      // SMART URL DETECTION: Use production URL if on Vercel/Production, otherwise use env or localhost
+      let apiBase = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
       
+      // Auto-fix: If we are on the live site, force the known Render URL
+      if (typeof window !== "undefined" && window.location.hostname.includes("vercel.app")) {
+        apiBase = "https://veera-safety-ai.onrender.com";
+      }
+      
+      // Ensure protocol
+      if (!apiBase.startsWith("http")) apiBase = `https://${apiBase}`;
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
+
       const res = await fetch(`${apiBase}/upload`, {
         method: "POST",
         body: formData,
+        signal: controller.signal
       });
 
+      clearTimeout(timeoutId);
       const data = await res.json();
       
       clearInterval(progressInterval);
@@ -181,7 +193,8 @@ export default function Dashboard({ activeTab }: DashboardProps) {
       clearInterval(progressInterval);
       console.error("Upload Error:", err);
       setUploadProgress(0);
-      window.alert(`Deep Analysis Failed: ${err.message || "Connection Error"}`);
+      const msg = err.name === "AbortError" ? "Request Timed Out (Render Spin-up)" : (err.message || "Connection Error");
+      window.alert(`Deep Analysis Failed: ${msg}`);
     }
   };
 
