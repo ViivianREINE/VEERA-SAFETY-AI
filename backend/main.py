@@ -28,6 +28,18 @@ TEMP_DIR.mkdir(exist_ok=True)
 
 inference_engine = MediaInference()
 
+@app.on_event("startup")
+async def startup_event():
+    """Pre-warm the AI model to ensure fast first-request response on Render."""
+    logger.info("Pre-warming VEERA_AI Neural Core...")
+    try:
+        # Run a dummy inference with a blank frame
+        blank_frame = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAREDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZnaEfX19fM3FyE6qp6kx8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3+iiigD//2Q=="
+        inference_engine.analyze_frame(blank_frame)
+        logger.info("Neural Core Warm-up Complete.")
+    except Exception as e:
+        logger.warning(f"Warm-up failed (non-critical): {e}")
+
 @app.get("/health")
 def health_check():
     return {"status": "ok", "message": "VEERA_SAFETY_AI backend is alive."}
